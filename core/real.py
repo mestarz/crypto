@@ -16,11 +16,7 @@ class OKXExecute(Execute, ABC):
         杠杆通过仓位控制，实际买入杠杆为全仓20倍，这样做是为了方便在持有仓位的情况下调整杠杆数
         """
         self.real_lever = 20
-        self.cfg.accountAPI.set_leverage(
-            instId=self.cfg.coin(),
-            lever=f"{self.real_lever}",
-            mgnMode="cross"
-        )
+        self.cfg.accountAPI.set_leverage(instId=self.cfg.coin(), lever=f"{self.real_lever}", mgnMode="cross")
 
         """
         初始化合约相关参数
@@ -38,8 +34,21 @@ class OKXExecute(Execute, ABC):
         result = self.cfg.marketAPI.get_mark_price_candlesticks(
             instId=self.cfg.coin(),
             bar=self.cfg.period(),
-        )['data'][::-1]
-        return pd.DataFrame(result, columns=['ts', 'Open', 'High', 'Low', 'Close', 'isOver'])
+        )["data"][::-1]
+
+        result = pd.DataFrame(result, columns=["ts", "Open", "High", "Low", "Close", "isOver"])
+        result["ts"] = pd.to_datetime(result["ts"].astype(float), unit="ms", errors="coerce")
+        result = result.astype(
+            {
+                "Open": float,
+                "High": float,
+                "Low": float,
+                "Close": float,
+                "isOver": int,
+            }
+        )
+        result.set_index("ts", inplace=True)
+        return result
 
     def buy(self):
         if self.buy_chance <= 0:
@@ -78,11 +87,8 @@ class OKXExecute(Execute, ABC):
         获取标记价格
         :return:
         """
-        result = self.cfg.publicDataAPI.get_mark_price(
-            instType="SWAP",
-            instId=self.cfg.coin()
-        )
-        return float(result['data'][0]['markPx'])
+        result = self.cfg.publicDataAPI.get_mark_price(instType="SWAP", instId=self.cfg.coin())
+        return float(result["data"][0]["markPx"])
 
     @retry()
     def _long_buy(self, size: int):
@@ -126,7 +132,9 @@ class OKXExecute(Execute, ABC):
         获取当前剩余资金
         :return:
         """
-        result = self.cfg.accountAPI.get_account_balance(ccy=self.cfg.ccy())['data'][0]['details'][0]['availBal']
+        result = self.cfg.accountAPI.get_account_balance(ccy=self.cfg.ccy())["data"][0]["details"][0][
+            "availBal"
+        ]
         if result == "":
             return 0
         return float(result)
@@ -137,10 +145,10 @@ class OKXExecute(Execute, ABC):
         获取当前仓位
         :return:
         """
-        result = self.cfg.accountAPI.get_positions(instId=self.cfg.coin())['data']
+        result = self.cfg.accountAPI.get_positions(instId=self.cfg.coin())["data"]
         if len(result) == 0:
             return 0
-        result = result[0]['availPos']
+        result = result[0]["availPos"]
         if result == "":
             return 0
         return float(result)
@@ -151,10 +159,10 @@ class OKXExecute(Execute, ABC):
         获取保证金
         :return:
         """
-        result = self.cfg.accountAPI.get_positions(instId=self.cfg.coin())['data']
+        result = self.cfg.accountAPI.get_positions(instId=self.cfg.coin())["data"]
         if len(result) == 0:
             return 0
-        result = result[0]['imr']
+        result = result[0]["imr"]
         if result == "":
             return 0
         return float(result)
