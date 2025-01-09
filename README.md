@@ -1,0 +1,2 @@
+# crypto
+okx rsi grid
