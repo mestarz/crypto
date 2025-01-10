@@ -21,9 +21,9 @@ class RSIGrid:
 
     def _factor(self, price: pd.DataFrame) -> Factor:
         price["Mid"] = (price["Close"] + price["Open"]) / 2
-        price["RSI"] = talib.RSI(price["Mid"], timeperiod=self.cfg.factor_int_param("rsi_timeperiod"))
-        price["MA_FAST"] = talib.SMA(price["Mid"], timeperiod=self.cfg.factor_int_param("ma_fast_timeperiod"))
-        price["MA_SLOW"] = talib.SMA(price["Mid"], timeperiod=self.cfg.factor_int_param("ma_slow_timeperiod"))
+        price["RSI"] = talib.RSI(price["Mid"], timeperiod=self.cfg.factor_config.rsi_timeperiod)
+        price["MA_FAST"] = talib.SMA(price["Mid"], timeperiod=self.cfg.factor_config.ma_fast_timeperiod)
+        price["MA_SLOW"] = talib.SMA(price["Mid"], timeperiod=self.cfg.factor_config.ma_slow_timeperiod)
 
         rsi = price["RSI"].to_numpy()
         ma_fast = price["MA_FAST"].to_numpy()
@@ -38,7 +38,7 @@ class RSIGrid:
         ma_fast_last = factor.ma_fast[-1]
         ma_slow_last = factor.ma_slow[-1]
 
-        condition = ma_slow_last > ma_fast_last and rsi_last < self.cfg.factor_int_param("rsi_down")
+        condition = ma_slow_last > ma_fast_last and rsi_last < self.cfg.factor_config.rsi_down
         return condition
 
     def _sell_condition(self, factor: Factor) -> bool:
@@ -48,7 +48,7 @@ class RSIGrid:
         ma_fast_last = factor.ma_fast[-1]
         ma_slow_last = factor.ma_slow[-1]
 
-        condition = ma_slow_last < ma_fast_last and rsi_last > self.cfg.factor_int_param("rsi_up")
+        condition = ma_slow_last < ma_fast_last and rsi_last > self.cfg.factor_config.rsi_up
         return condition
 
     def run(self):

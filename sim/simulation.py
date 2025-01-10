@@ -65,12 +65,12 @@ class SimulationExec(Execute, ABC):
         self.stop_time = 500 * 60
         self._init_random_price()
 
-        self.rsi = talib.RSI(np.array(self.price_history), timeperiod=cfg.factor_int_param("rsi_timeperiod"))
+        self.rsi = talib.RSI(np.array(self.price_history), timeperiod=cfg.factor_config.rsi_timeperiod)
         self.fast = talib.SMA(
-            np.array(self.price_history), timeperiod=cfg.factor_int_param("ma_fast_timeperiod")
+            np.array(self.price_history), timeperiod=cfg.factor_config.ma_fast_timeperiod
         )
         self.slow = talib.SMA(
-            np.array(self.price_history), timeperiod=cfg.factor_int_param("ma_slow_timeperiod")
+            np.array(self.price_history), timeperiod=cfg.factor_config.ma_slow_timeperiod
         )
 
         self.sleep(20 * 60)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     # 获取K线数据（每分钟价格）
     kline_data = np.array(sim.price_history)
     # 获取RSI数据
-    rsi_data = talib.RSI(np.array(kline_data), timeperiod=cfg.factor_int_param("rsi_timeperiod"))
+    rsi_data = talib.RSI(np.array(kline_data), timeperiod=cfg.factor_config.rsi_timeperiod)
     # 替换掉nan
     rsi_data[np.isnan(rsi_data)] = 50
 

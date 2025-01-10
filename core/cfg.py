@@ -19,7 +19,8 @@ class APIConfig:
     secret_key: str
     passphrase: str
     proxy: str
-    is_simulate: bool = False
+    is_simulate: bool
+    api_debug: bool
 
 
 @dataclass
@@ -43,6 +44,17 @@ class LogConfig:
     level: int
 
 
+@dataclass
+class FactorConfig:
+    """FACTOR 配置"""
+
+    rsi_timeperiod: int
+    ma_fast_timeperiod: int
+    ma_slow_timeperiod: int
+    rsi_down: int
+    rsi_up: int
+
+
 class Config:
     """应用配置管理类"""
 
@@ -57,6 +69,7 @@ class Config:
         self.api_config = self._init_api_config()
         self.trade_config = self._init_trade_config()
         self.log_config = self._init_log_config()
+        self.factor_config = self._init_factor_config()
         self.logger = self._init_logger()
         self._init_apis()
 
@@ -71,23 +84,24 @@ class Config:
     def _init_api_config(self) -> APIConfig:
         """初始化API配置"""
         return APIConfig(
-            api_key=self._cfg.get("OKX", "apikey"),
-            secret_key=self._cfg.get("OKX", "secretkey"),
-            passphrase=self._cfg.get("OKX", "passphrase"),
-            proxy=self._cfg.get("DEFAULT", "proxy"),
-            is_simulate=self._cfg.getboolean("DEFAULT", "simulate"),
+            api_key=self._cfg.get("OKX", "apikey", fallback="default_api_key"),
+            secret_key=self._cfg.get("OKX", "secretkey", fallback="default_secret_key"),
+            passphrase=self._cfg.get("OKX", "passphrase", fallback="default_passphrase"),
+            proxy=self._cfg.get("DEFAULT", "proxy", fallback=""),
+            is_simulate=self._cfg.getboolean("DEFAULT", "simulate", fallback=True),
+            api_debug=self._cfg.getboolean("DEFAULT", "api_debug", fallback=True),
         )
 
     def _init_trade_config(self) -> TradeConfig:
         """初始化交易配置"""
         return TradeConfig(
-            coin=self._cfg.get("TRADE", "coin"),
-            period=self._cfg.get("TRADE", "period"),
-            lever=self._cfg.getfloat("TRADE", "lever"),
-            ccy=self._cfg.get("TRADE", "ccy"),
-            reserved=self._cfg.getfloat("TRADE", "reserved"),
-            max_buy_chance=self._cfg.getint("TRADE", "max_buy_chance"),
-            trade_timeperiod=self._cfg.getint("TRADE", "trade_timeperiod"),
+            coin=self._cfg.get("TRADE", "coin", fallback="BTC"),
+            period=self._cfg.get("TRADE", "period", fallback="1m"),
+            lever=self._cfg.getfloat("TRADE", "lever", fallback=1.0),
+            ccy=self._cfg.get("TRADE", "ccy", fallback="USDT"),
+            reserved=self._cfg.getfloat("TRADE", "reserved", fallback=100.0),
+            max_buy_chance=self._cfg.getint("TRADE", "max_buy_chance", fallback=5),
+            trade_timeperiod=self._cfg.getint("TRADE", "trade_timeperiod", fallback=14),
         )
 
     def _init_log_config(self) -> LogConfig:
@@ -95,6 +109,16 @@ class Config:
         level_str = self._cfg.get("LOG", "level")
         level = getattr(logging, level_str.upper())
         return LogConfig(filename=self._cfg.get("LOG", "filename"), level=level)
+
+    def _init_factor_config(self) -> FactorConfig:
+        """初始化FACTOR配置"""
+        return FactorConfig(
+            rsi_timeperiod=self._cfg.getint("FACTOR", "rsi_timeperiod", fallback=14),
+            ma_fast_timeperiod=self._cfg.getint("FACTOR", "ma_fast_timeperiod", fallback=6),
+            ma_slow_timeperiod=self._cfg.getint("FACTOR", "ma_slow_timeperiod", fallback=14),
+            rsi_down=self._cfg.getint("FACTOR", "rsi_down", fallback=30),
+            rsi_up=self._cfg.getint("FACTOR", "rsi_up", fallback=70),
+        )
 
     def _init_apis(self) -> None:
         """初始化所有API接口"""
@@ -107,6 +131,7 @@ class Config:
             use_server_time=False,
             proxy=self.api_config.proxy,
             flag=flag,
+            debug=self.api_config.api_debug,
         )
 
         self.tradeAPI = okx.Trade.TradeAPI(
@@ -116,11 +141,16 @@ class Config:
             use_server_time=False,
             flag=flag,
             proxy=self.api_config.proxy,
+            debug=self.api_config.api_debug,
         )
 
-        self.publicDataAPI = okx.PublicData.PublicAPI(flag=flag, proxy=self.api_config.proxy)
+        self.publicDataAPI = okx.PublicData.PublicAPI(
+            flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
+        )
 
-        self.marketAPI = okx.MarketData.MarketAPI(flag=flag, proxy=self.api_config.proxy)
+        self.marketAPI = okx.MarketData.MarketAPI(
+            flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
+        )
 
     def _init_logger(self) -> Logger:
         """初始化日志记录器"""
@@ -144,10 +174,6 @@ class Config:
         logger.addHandler(console_handler)
         return logger
 
-    def factor_int_param(self, param: str) -> int:
-        """获取FACTOR部分的整型参数"""
-        return self._cfg.getint("FACTOR", param)
-
     def print_cfg(self) -> None:
         """打印当前配置"""
         self.logger.info("=== API配置 ===")
@@ -156,6 +182,7 @@ class Config:
         self.logger.info(f"Passphrase: {'*' * len(self.api_config.passphrase)}")
         self.logger.info(f"Proxy: {self.api_config.proxy}")
         self.logger.info(f"模拟模式: {self.api_config.is_simulate}")
+        self.logger.info(f"API Debug: {self.api_config.api_debug}")
 
         self.logger.info("\n=== 交易配置 ===")
         self.logger.info(f"交易币种: {self.trade_config.coin}")
@@ -169,3 +196,10 @@ class Config:
         self.logger.info("\n=== 日志配置 ===")
         self.logger.info(f"日志文件: {self.log_config.filename}")
         self.logger.info(f"日志级别: {self.log_config.level}")
+
+        self.logger.info("\n=== FACTOR配置 ===")
+        self.logger.info(f"RSI 时间周期: {self.factor_config.rsi_timeperiod}")
+        self.logger.info(f"MA 快速时间周期: {self.factor_config.ma_fast_timeperiod}")
+        self.logger.info(f"MA 慢速时间周期: {self.factor_config.ma_slow_timeperiod}")
+        self.logger.info(f"RSI 下限: {self.factor_config.rsi_down}")
+        self.logger.info(f"RSI 上限: {self.factor_config.rsi_up}")
