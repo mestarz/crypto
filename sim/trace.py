@@ -2,6 +2,7 @@ import talib
 import numpy as np
 from matplotlib import gridspec
 import matplotlib.pyplot as plt
+import time  # 添加time模块
 
 from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
@@ -12,37 +13,54 @@ from core.cfg import Config
 
 
 class SimulationPlotter:
-    def __init__(self, kline_data, buy_points, sell_points, rsi_data):
+    def __init__(self, kline_data, buy_points, sell_points, rsi_data, assert_price_history):
         self.kline_data = kline_data
         self.buy_points = buy_points
         self.sell_points = sell_points
         self.rsi_data = rsi_data
+        self.assert_price_history = assert_price_history
+        self.background = None
+        self.last_time = time.time()  # 使用time.time()初始化
+        self.throttle_interval = 1/30  # 限制更新频率为30fps
+        self.resizing = False  # 添加重绘标志
 
     def show(self):
         self.validate_data()
-        self.ax1, self.ax2 = self.setup_figure()
+        self.ax1, self.ax2, self.ax3 = self.setup_figure()
 
         self.plot_price_chart()
         self.plot_rsi_chart()
+        self.plot_assert_price_chart()
 
-        self.vert_line1, self.vert_line2, self.annotation = self.add_interactive_elements()
-
-        plt.connect("motion_notify_event", self.on_mouse_move)
+        self.vert_line1, self.vert_line2, self.vert_line3, self.annotation = self.add_interactive_elements()
+        
+        # 修改显示逻辑
+        self.fig = plt.gcf()
         plt.tight_layout()
+        
+        # 连接事件
+        self.fig.canvas.mpl_connect('motion_notify_event', self.on_mouse_move)
+        self.fig.canvas.mpl_connect('resize_event', self.on_resize)
+        
+        # 初始化绘图
+        self.update_background()
         plt.show()
 
     def validate_data(self):
-        if (self.kline_data is None or len(self.kline_data) < 2) or (
-            self.rsi_data is None or len(self.rsi_data) < 2
+        if (
+            (self.kline_data is None or len(self.kline_data) < 2)
+            or (self.rsi_data is None or len(self.rsi_data) < 2)
+            or (self.assert_price_history is None or len(self.assert_price_history) < 2)
         ):
             raise ValueError("数据不足，无法绘制图表")
 
     def setup_figure(self):
-        plt.figure(figsize=(12, 8))
-        gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+        plt.figure(figsize=(12, 10))
+        gs = gridspec.GridSpec(3, 1, height_ratios=[3, 1, 1])
         ax1 = plt.subplot(gs[0])
         ax2 = plt.subplot(gs[1])
-        return ax1, ax2
+        ax3 = plt.subplot(gs[2])
+        return ax1, ax2, ax3
 
     def plot_price_chart(self):
         self.ax1.set_title("Simulation Price Chart")
@@ -69,9 +87,17 @@ class SimulationPlotter:
         self.ax2.axhline(30, color="green", linestyle="--")
         self.ax2.legend()
 
+    def plot_assert_price_chart(self):
+        self.ax3.set_title("Assert Price History")
+        self.ax3.plot(self.assert_price_history, label="Assert Price", color="blue")
+        self.ax3.legend()
+
     def add_interactive_elements(self):
-        vert_line1 = self.ax1.axvline(color="k", linestyle="--")
-        vert_line2 = self.ax2.axvline(color="k", linestyle="--")
+        # 创建更高效的线条对象
+        vert_line1 = self.ax1.axvline(x=0, color="k", linestyle="--", animated=True)
+        vert_line2 = self.ax2.axvline(x=0, color="k", linestyle="--", animated=True)
+        vert_line3 = self.ax3.axvline(x=0, color="k", linestyle="--", animated=True)
+        
         annotation = self.ax1.annotate(
             "",
             xy=(0, 0),
@@ -80,22 +106,69 @@ class SimulationPlotter:
             fontsize=12,
             bbox=dict(boxstyle="round,pad=0.5", fc="yellow", alpha=0.5),
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0"),
+            animated=True
         )
-        annotation.set_visible(False)
-        return vert_line1, vert_line2, annotation
+        return vert_line1, vert_line2, vert_line3, annotation
+
+    def update_background(self):
+        """更新背景缓存"""
+        self.fig.canvas.draw()
+        self.background = self.fig.canvas.copy_from_bbox(self.fig.bbox)
+        # 隐藏动态元素
+        self.vert_line1.set_visible(False)
+        self.vert_line2.set_visible(False)
+        self.vert_line3.set_visible(False)
+        self.annotation.set_visible(False)
+
+    def on_resize(self, event):
+        """处理窗口大小改变事件"""
+        self.resizing = True
+        self.update_background()
+        self.resizing = False
 
     def on_mouse_move(self, event):
-        if event.inaxes in [self.ax1, self.ax2]:
-            self.vert_line1.set_xdata([event.xdata])
-            self.vert_line2.set_xdata([event.xdata])
-            index = int(event.xdata)
-            if 0 <= index < len(self.kline_data):
-                price = self.kline_data[index]
-                rsi = self.rsi_data[index]
-                self.annotation.xy = (event.xdata, price)
-                self.annotation.set_text(f"Price: {price:.2f}\nRSI: {rsi:.2f}")
-                self.annotation.set_visible(True)
-            plt.draw()
+        if event.inaxes in [self.ax1, self.ax2, self.ax3] and not self.resizing:
+            current_time = time.time()
+            
+            if current_time - self.last_time < self.throttle_interval:
+                return
+            
+            try:
+                index = int(event.xdata)
+                if 0 <= index < len(self.kline_data):
+                    self.last_time = current_time
+                    
+                    # 确保背景是最新的
+                    if self.background is None:
+                        self.update_background()
+                    
+                    # 恢复背景
+                    self.fig.canvas.restore_region(self.background)
+                    
+                    # 更新竖线
+                    for line in [self.vert_line1, self.vert_line2, self.vert_line3]:
+                        line.set_xdata([index])
+                        line.set_visible(True)
+                        ax = line.axes
+                        ax.draw_artist(line)
+                    
+                    # 更新标注
+                    price = self.kline_data[index]
+                    rsi = self.rsi_data[index]
+                    assert_price = self.assert_price_history[index]
+                    
+                    self.annotation.xy = (index, price)
+                    self.annotation.set_text(
+                        f"Price: {price:.2f}\nRSI: {rsi:.2f}\nAssert Price: {assert_price:.2f}"
+                    )
+                    self.annotation.set_visible(True)
+                    self.ax1.draw_artist(self.annotation)
+                    
+                    # 刷新画布
+                    self.fig.canvas.blit(self.fig.bbox)
+
+            except Exception as e:
+                print(f"Error in on_mouse_move: {e}")
 
 
 class TraceExec(Execute, ABC):
@@ -135,7 +208,10 @@ class TraceExec(Execute, ABC):
         """模拟时间延迟"""
         for _ in range(seconds):
             self.work_time += 1
-            self.assert_price_history.append(self.balance + self.position * self.price_history[self._time()])
+            if self.work_time % 60 == 0:
+                self.assert_price_history.append(
+                    self.balance + self.position * self.price_history[self._time()]
+                )
 
     def now(self) -> datetime:
         """返回当前模拟时间"""
@@ -182,8 +258,19 @@ class TraceExec(Execute, ABC):
 
         buy_timestamps = np.array(self.buy_history)
         sell_timestamps = np.array(self.sell_history)
+        assert_price_history = np.array(self.assert_price_history)
+
+        # 将kline_data、rsi_data、assert_price_history统一成长度相同的数组
+        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history))
+        kline_data = kline_data[:min_len]
+        rsi_data = rsi_data[:min_len]
+        assert_price_history = assert_price_history[:min_len]
 
         plotter = SimulationPlotter(
-            kline_data=kline_data, buy_points=buy_timestamps, sell_points=sell_timestamps, rsi_data=rsi_data
+            kline_data=kline_data,
+            buy_points=buy_timestamps,
+            sell_points=sell_timestamps,
+            rsi_data=rsi_data,
+            assert_price_history=assert_price_history,
         )
         plotter.show()

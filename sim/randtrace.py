@@ -20,4 +20,3 @@ if __name__ == "__main__":
     strategy = RSIGrid(sim, cfg=cfg)
     strategy.run()
     sim.display()
-    print(sim.assert_price_history)
