@@ -63,14 +63,10 @@ class RSIGrid:
 
             if self._buy_condition(factor):
                 self.exec.buy()
-                self.buy_step *= 2
                 self.last_buy_time = self.exec.now()
-                self.sell_step = self.time_step
             elif self._sell_condition(factor):
                 self.exec.sell()
-                self.sell_step *= 2
                 self.last_sell_time = self.exec.now()
-                self.buy_step = self.time_step
             self.exec.sleep(self.cfg.trade_config.trade_timeperiod)
 
             if self.exec.stop():

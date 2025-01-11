@@ -74,7 +74,6 @@ class OKXExecute(RealExecute):
 
         buy_count = self._calculate_buy_count()
         now_price = self._get_tag_price()
-        self.buy_chance -= 1
         self.logger.info(f"触发买入: 预计数量={buy_count}, 价格={now_price}, 剩余买入次数={self.buy_chance}")
         remain_count = buy_count
         while remain_count > buy_count * 0.2:
@@ -84,7 +83,9 @@ class OKXExecute(RealExecute):
             if cprice > now_price:
                 self.logger.info(f"当前价格{cprice}高于买入价格{now_price}，停止买入")
                 break
-        self.logger.info(f"买入完成: 实际数量={buy_count - remain_count}")
+        if remain_count < buy_count * 0.5:
+            self.buy_chance -= 1
+        self.logger.info(f"买入完成: 实际数量={buy_count - remain_count}, 剩余买入次数={self.buy_chance}")
 
     def _calculate_buy_count(self) -> int:
         """计算买入数量"""
@@ -100,7 +101,6 @@ class OKXExecute(RealExecute):
 
         sell_count = self._calculate_sell_count()
         now_price = self._get_tag_price()
-        self.buy_chance += 1
         self.logger.info(
             f"触发卖出: 预计卖出数量={sell_count}, 价格={now_price}, 剩余买入次数={self.buy_chance}"
         )
@@ -112,7 +112,9 @@ class OKXExecute(RealExecute):
             if cprice < now_price:
                 self.logger.info(f"当前价格{cprice}低于卖出价格{now_price}，停止卖出")
                 break
-        self.logger.info(f"卖出完成: 实际数量={sell_count - remain_count}")
+        if remain_count < sell_count * 0.5:
+            self.buy_chance += 1
+        self.logger.info(f"卖出完成: 实际数量={sell_count - remain_count}, 剩余买入次数={self.buy_chance}")
 
     def _calculate_sell_count(self) -> int:
         """计算卖出数量"""
