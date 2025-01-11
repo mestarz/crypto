@@ -36,7 +36,7 @@ class BackTrace(TraceExec):
 
 if __name__ == "__main__":
     cfg = Config("simulation.ini")
-    backtrace = BackTrace(cfg=cfg)
+    backtrace = BackTrace(cfg=cfg, times=500)
     strategy = RSIGrid(backtrace, cfg=cfg)
     strategy.run()
     backtrace.display()
