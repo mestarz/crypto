@@ -16,7 +16,8 @@ class RandomExec(TraceExec):
 
 if __name__ == "__main__":
     cfg = Config("simulation.ini")
-    cfg.trade_config.lever = 20
+    cfg.factor_config.ma_fast_timeperiod = 20
+    cfg.factor_config.ma_slow_timeperiod = 120
     sim = RandomExec(cfg=cfg)
     strategy = RSIGrid(sim, cfg=cfg)
     strategy.run()

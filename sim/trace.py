@@ -118,13 +118,17 @@ class TraceExec(Execute, ABC):
         sell_timestamps = np.array(self.sell_history)
         assert_price_history = np.array(self.assert_price_history)
         baseline = np.array(self.baseline)  # 添加基准数据
+        fast = np.array(self.fast)  # 添加快均线数据
+        slow = np.array(self.slow)  # 添加慢均线数据
 
         # 将数组统一长度
-        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history), len(baseline))
+        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history), len(baseline), len(fast), len(slow))
         kline_data = kline_data[:min_len]
         rsi_data = rsi_data[:min_len]
         assert_price_history = assert_price_history[:min_len]
         baseline = baseline[:min_len]  # 截取基准数据
+        fast = fast[:min_len]  # 截取快均线数据
+        slow = slow[:min_len]  # 截取慢均线数据
 
         plotter = SimulationPlotter(
             kline_data=kline_data,
@@ -133,5 +137,7 @@ class TraceExec(Execute, ABC):
             rsi_data=rsi_data,
             assert_price_history=assert_price_history,
             baseline=baseline,  # 添加基准数据参数
+            fast=fast,  # 添加快均线数据参数
+            slow=slow,  # 添加慢均线数据参数
         )
         plotter.show()

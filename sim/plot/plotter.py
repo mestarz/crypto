@@ -4,13 +4,17 @@ import time  # 添加time模块
 
 
 class SimulationPlotter:
-    def __init__(self, kline_data, buy_points, sell_points, rsi_data, assert_price_history, baseline):
+    def __init__(
+        self, kline_data, buy_points, sell_points, rsi_data, assert_price_history, baseline, fast, slow
+    ):
         self.kline_data = kline_data
         self.buy_points = buy_points
         self.sell_points = sell_points
         self.rsi_data = rsi_data
         self.assert_price_history = assert_price_history
         self.baseline = baseline  # 添加基准数据属性
+        self.fast = fast  # 添加快均线数据属性
+        self.slow = slow  # 添加慢均线数据属性
         self.background = None
         self.last_time = time.time()  # 使用time.time()初始化
         self.throttle_interval = 1 / 200  # 帧数/fps
@@ -57,6 +61,8 @@ class SimulationPlotter:
     def plot_price_chart(self):
         self.ax1.set_title("Simulation Price Chart")
         self.ax1.plot(self.kline_data, label="Price")
+        self.ax1.plot(self.fast, label="Fast MA", color="red", linestyle="--")  # 绘制快均线，红色虚线
+        self.ax1.plot(self.slow, label="Slow MA", color="green", linestyle="--")  # 绘制慢均线，绿色虚线
         if self.buy_points is not None and len(self.buy_points) > 0:
             self.ax1.scatter(
                 self.buy_points, self.kline_data[self.buy_points], marker="^", color="g", label="Buy", s=200
