@@ -6,7 +6,7 @@ from core.cfg import Config
 
 
 class BackTrace(TraceExec):
-    def init_price(self):
+    def init_price_history(self):
         """初始化价格数据"""
         self.price_history = self._get_okx_data(self.stop_time // 60 + 10)
 

@@ -104,19 +104,23 @@ class TraceExec(Execute, ABC):
         self.sell_history = []
         self.price_history = []
 
+        self.balance = 5000
+        self.position = 0
+        self.assert_price_history = [5000]
+
         self.cfg = cfg
         self.work_time = 0
         self.stop_time = 500 * 60
-        self.max_buy_chance = cfg.trade_config.max_buy_chance
+        self.buy_chance = cfg.trade_config.max_buy_chance
 
-        self.init_price()
+        self.init_price_history()
         self.initialize_indicators(cfg)
 
         self.sleep(20 * 60)
         self.start_time = datetime.now()
 
     @abstractmethod
-    def init_price(self):
+    def init_price_history(self):
         pass
 
     def initialize_indicators(self, cfg):
@@ -124,9 +128,14 @@ class TraceExec(Execute, ABC):
         self.fast = talib.SMA(np.array(self.price_history), timeperiod=cfg.factor_config.ma_fast_timeperiod)
         self.slow = talib.SMA(np.array(self.price_history), timeperiod=cfg.factor_config.ma_slow_timeperiod)
 
+    def _time(self) -> int:
+        return self.work_time // 60
+
     def sleep(self, seconds: int):
         """模拟时间延迟"""
-        self.work_time += seconds
+        for _ in range(seconds):
+            self.work_time += 1
+            self.assert_price_history.append(self.balance + self.position * self.price_history[self._time()])
 
     def now(self) -> datetime:
         """返回当前模拟时间"""
@@ -140,24 +149,30 @@ class TraceExec(Execute, ABC):
 
     def _factor(self, _) -> Factor:
         return Factor(
-            self.rsi[: int(self.work_time / 60)],
-            self.fast[: int(self.work_time / 60)],
-            self.slow[: int(self.work_time / 60)],
+            self.rsi[: self._time()],
+            self.fast[: self._time()],
+            self.slow[: self._time()],
         )
 
     def buy(self):
         """执行买入操作"""
-        if self.max_buy_chance <= 0:
+        if self.buy_chance <= 0:
             return
-        self.buy_history.append(int(self.work_time / 60))
-        self.max_buy_chance -= 1
+        self.buy_history.append(self._time())
+        buy_count = int((self.balance / self.buy_chance) / self.price_history[self._time()])
+        self.position += buy_count
+        self.balance -= buy_count * self.price_history[self._time()]
+        self.buy_chance -= 1
 
     def sell(self):
         """执行卖出操作"""
-        if self.max_buy_chance == self.cfg.trade_config.max_buy_chance:
+        if self.buy_chance == self.cfg.trade_config.max_buy_chance:
             return
-        self.sell_history.append(int(self.work_time / 60))
-        self.max_buy_chance += 1
+        self.sell_history.append(self._time())
+        sell_count = int(self.position / (self.cfg.trade_config.max_buy_chance - self.buy_chance))
+        self.position -= sell_count
+        self.balance += sell_count * self.price_history[self._time()]
+        self.buy_chance += 1
 
     def display(self):
         """显示回测结果"""

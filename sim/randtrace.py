@@ -5,7 +5,7 @@ from strategy.rsigrid import RSIGrid
 
 
 class RandomExec(TraceExec):
-    def init_price(self):
+    def init_price_history(self):
         current_price = 100
         # 生成正态分布的随机数，均值0，标准差0.0333，限制在[-0.1, 0.1]范围内
         for _ in range(int(self.stop_time / 60) + 10):
@@ -20,3 +20,4 @@ if __name__ == "__main__":
     strategy = RSIGrid(sim, cfg=cfg)
     strategy.run()
     sim.display()
+    print(sim.assert_price_history)
