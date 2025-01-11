@@ -59,3 +59,14 @@ class APIService:
         result = self.publicDataAPI.get_instruments(instType="SWAP", instId=instId)
         coin_info = result["data"][0]
         return float(coin_info["ctVal"])
+
+    @retry()
+    def cancel_orders(self, orders: list):
+        """批量撤单"""
+        return self.tradeAPI.cancel_multiple_orders(orders)
+
+    @retry()
+    def get_order_unclosed_count(self, instid: str, cid: str):
+        """获取订单未成交的数量"""
+        raw_data = self.tradeAPI.get_order(instId=instid, clOrdId=cid)["data"][0]
+        return int(raw_data["sz"]) - int(raw_data["accFillSz"])

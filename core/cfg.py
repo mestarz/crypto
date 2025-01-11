@@ -32,6 +32,7 @@ class TradeConfig:
     lever: float
     ccy: str
     reserved: float
+    order_wait: int
     max_buy_chance: int
     trade_timeperiod: int
 
@@ -100,6 +101,7 @@ class Config:
             lever=self._cfg.getfloat("TRADE", "lever", fallback=1.0),
             ccy=self._cfg.get("TRADE", "ccy", fallback="USDT"),
             reserved=self._cfg.getfloat("TRADE", "reserved", fallback=100.0),
+            order_wait=self._cfg.getint("TRADE", "order_wait", fallback=30),
             max_buy_chance=self._cfg.getint("TRADE", "max_buy_chance", fallback=5),
             trade_timeperiod=self._cfg.getint("TRADE", "trade_timeperiod", fallback=14),
         )
@@ -190,6 +192,7 @@ class Config:
         self.logger.info(f"杠杆倍数: {self.trade_config.lever}")
         self.logger.info(f"保证金币种: {self.trade_config.ccy}")
         self.logger.info(f"保留金额: {self.trade_config.reserved}")
+        self.logger.info(f"订单等待时间: {self.trade_config.order_wait}")
         self.logger.info(f"最大买入次数: {self.trade_config.max_buy_chance}")
         self.logger.info(f"交易时间周期: {self.trade_config.trade_timeperiod}")
 
