@@ -12,16 +12,16 @@ from sim.plot.plotter import SimulationPlotter
 
 
 class TraceExec(Execute, ABC):
-    def __init__(self, cfg: Config, times: int = 500):
+    def __init__(self, cfg: Config, times: int = 500, balance: int = 5000):
         self.buy_history = []
         self.sell_history = []
         self.price_history = []
 
-        self.balance = 5000  # 资金
+        self.balance = balance  # 资金
         self.position = 0  # 仓位
         self.debt = 0  # 合约负债
         self.commission = 0  # 手续费
-        self.assert_price_history = [5000]
+        self.assert_price_history = [balance]
 
         self.cfg = cfg
         self.work_time = 0
@@ -29,6 +29,7 @@ class TraceExec(Execute, ABC):
         self.buy_chance = cfg.trade_config.max_buy_chance
 
         self.init_price_history()
+        self.init_baseline(balance=balance)
         self.initialize_indicators(cfg)
 
         self.sleep(20 * 60)
@@ -37,6 +38,12 @@ class TraceExec(Execute, ABC):
     @abstractmethod
     def init_price_history(self):
         pass
+
+    def init_baseline(self, balance: int):
+        self.baseline = []
+        init_position = balance / self.price_history[0]
+        for i in range(len(self.price_history)):
+            self.baseline.append(init_position * self.price_history[i])
 
     def initialize_indicators(self, cfg):
         self.rsi = talib.RSI(np.array(self.price_history), timeperiod=cfg.factor_config.rsi_timeperiod)
@@ -110,12 +117,14 @@ class TraceExec(Execute, ABC):
         buy_timestamps = np.array(self.buy_history)
         sell_timestamps = np.array(self.sell_history)
         assert_price_history = np.array(self.assert_price_history)
+        baseline = np.array(self.baseline)  # 添加基准数据
 
-        # 将kline_data、rsi_data、assert_price_history统一成长度相同的数组
-        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history))
+        # 将数组统一长度
+        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history), len(baseline))
         kline_data = kline_data[:min_len]
         rsi_data = rsi_data[:min_len]
         assert_price_history = assert_price_history[:min_len]
+        baseline = baseline[:min_len]  # 截取基准数据
 
         plotter = SimulationPlotter(
             kline_data=kline_data,
@@ -123,5 +132,6 @@ class TraceExec(Execute, ABC):
             sell_points=sell_timestamps,
             rsi_data=rsi_data,
             assert_price_history=assert_price_history,
+            baseline=baseline,  # 添加基准数据参数
         )
         plotter.show()

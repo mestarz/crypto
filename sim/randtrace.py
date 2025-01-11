@@ -16,6 +16,7 @@ class RandomExec(TraceExec):
 
 if __name__ == "__main__":
     cfg = Config("simulation.ini")
+    cfg.trade_config.lever = 20
     sim = RandomExec(cfg=cfg)
     strategy = RSIGrid(sim, cfg=cfg)
     strategy.run()

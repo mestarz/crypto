@@ -4,15 +4,16 @@ import time  # 添加time模块
 
 
 class SimulationPlotter:
-    def __init__(self, kline_data, buy_points, sell_points, rsi_data, assert_price_history):
+    def __init__(self, kline_data, buy_points, sell_points, rsi_data, assert_price_history, baseline):
         self.kline_data = kline_data
         self.buy_points = buy_points
         self.sell_points = sell_points
         self.rsi_data = rsi_data
         self.assert_price_history = assert_price_history
+        self.baseline = baseline  # 添加基准数据属性
         self.background = None
         self.last_time = time.time()  # 使用time.time()初始化
-        self.throttle_interval = 1 / 30  # 限制更新频率为30fps
+        self.throttle_interval = 1 / 200  # 帧数/fps
         self.resizing = False  # 添加重绘标志
 
     def show(self):
@@ -81,6 +82,7 @@ class SimulationPlotter:
     def plot_assert_price_chart(self):
         self.ax3.set_title("Assert Price History")
         self.ax3.plot(self.assert_price_history, label="Assert Price", color="blue")
+        self.ax3.plot(self.baseline, label="Baseline", color="gray", linestyle="--")  # 添加基准线
         self.ax3.legend()
 
     def add_interactive_elements(self):
@@ -147,10 +149,14 @@ class SimulationPlotter:
                     price = self.kline_data[index]
                     rsi = self.rsi_data[index]
                     assert_price = self.assert_price_history[index]
+                    baseline_price = self.baseline[index]  # 获取基准价格
 
                     self.annotation.xy = (index, price)
                     self.annotation.set_text(
-                        f"Price: {price:.2f}\nRSI: {rsi:.2f}\nAssert Price: {assert_price:.2f}"
+                        f"Price: {price:.2f}\n"
+                        f"RSI: {rsi:.2f}\n"
+                        f"Assert Price: {assert_price:.2f}\n"
+                        f"Baseline: {baseline_price:.2f}"  # 添加基准价格显示
                     )
                     self.annotation.set_visible(True)
                     self.ax1.draw_artist(self.annotation)
