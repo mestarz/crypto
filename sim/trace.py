@@ -14,10 +14,8 @@ from core.cfg import Config
 def show_simulation_result(kline_data, buy_points, sell_points, rsi_data):
     """展示仿真结果"""
     try:
-        if kline_data is None or len(kline_data) < 2:
-            raise ValueError("K线数据不足，无法绘制图表")
-        if rsi_data is None or len(rsi_data) < 2:
-            raise ValueError("RSI数据不足，无法绘制图表")
+        if (kline_data is None or len(kline_data) < 2) or (rsi_data is None or len(rsi_data) < 2):
+            raise ValueError("数据不足，无法绘制图表")
 
         plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
@@ -34,15 +32,6 @@ def show_simulation_result(kline_data, buy_points, sell_points, rsi_data):
             ax1.scatter(sell_points, kline_data[sell_points], marker="v", color="r", label="Sell", s=200)
         ax1.legend()
 
-        # 添加跟随鼠标的竖线
-        vert_line1 = ax1.axvline(color='k', linestyle='--')
-        def on_mouse_move(event):
-            if event.inaxes == ax1:
-                vert_line1.set_xdata([event.xdata])
-                vert_line2.set_xdata([event.xdata])
-                plt.draw()
-        plt.connect('motion_notify_event', on_mouse_move)
-
         # RSI图表
         ax2 = plt.subplot(gs[1])
         ax2.set_title("RSI")
@@ -52,7 +41,28 @@ def show_simulation_result(kline_data, buy_points, sell_points, rsi_data):
         ax2.legend()
 
         # 添加跟随鼠标的竖线
+        vert_line1 = ax1.axvline(color='k', linestyle='--')
         vert_line2 = ax2.axvline(color='k', linestyle='--')
+
+        # 添加显示价格和 RSI 的注释
+        annotation = ax1.annotate('', xy=(0, 0), xytext=(15, 15),
+                                  textcoords='offset points', fontsize=12, bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.5),
+                                  arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+        annotation.set_visible(False)
+
+        def on_mouse_move(event):
+            if event.inaxes in [ax1, ax2]:
+                vert_line1.set_xdata([event.xdata])
+                vert_line2.set_xdata([event.xdata])
+                index = int(event.xdata)
+                if 0 <= index < len(kline_data):
+                    price = kline_data[index]
+                    rsi = rsi_data[index]
+                    annotation.xy = (event.xdata, price)
+                    annotation.set_text(f'Price: {price:.2f}\nRSI: {rsi:.2f}')
+                    annotation.set_visible(True)
+                plt.draw()
+        plt.connect('motion_notify_event', on_mouse_move)
 
         plt.tight_layout()
         plt.show()
