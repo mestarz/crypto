@@ -34,6 +34,15 @@ def show_simulation_result(kline_data, buy_points, sell_points, rsi_data):
             ax1.scatter(sell_points, kline_data[sell_points], marker="v", color="r", label="Sell", s=200)
         ax1.legend()
 
+        # 添加跟随鼠标的竖线
+        vert_line1 = ax1.axvline(color='k', linestyle='--')
+        def on_mouse_move(event):
+            if event.inaxes == ax1:
+                vert_line1.set_xdata([event.xdata])
+                vert_line2.set_xdata([event.xdata])
+                plt.draw()
+        plt.connect('motion_notify_event', on_mouse_move)
+
         # RSI图表
         ax2 = plt.subplot(gs[1])
         ax2.set_title("RSI")
@@ -41,6 +50,9 @@ def show_simulation_result(kline_data, buy_points, sell_points, rsi_data):
         ax2.axhline(70, color="red", linestyle="--")
         ax2.axhline(30, color="green", linestyle="--")
         ax2.legend()
+
+        # 添加跟随鼠标的竖线
+        vert_line2 = ax2.axvline(color='k', linestyle='--')
 
         plt.tight_layout()
         plt.show()
