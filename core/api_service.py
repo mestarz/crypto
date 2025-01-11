@@ -1,4 +1,4 @@
-from utils.retry import retry
+from core.utils.retry import retry
 
 
 class APIService:
@@ -66,7 +66,33 @@ class APIService:
         return self.tradeAPI.cancel_multiple_orders(orders)
 
     @retry()
-    def get_order_unclosed_count(self, instid: str, cid: str):
+    def get_order_unclosed_count(self, instId: str, cid: str):
         """获取订单未成交的数量"""
-        raw_data = self.tradeAPI.get_order(instId=instid, clOrdId=cid)["data"][0]
+        raw_data = self.tradeAPI.get_order(instId=instId, clOrdId=cid)["data"][0]
         return int(raw_data["sz"]) - int(raw_data["accFillSz"])
+
+    @retry()
+    def market_buy(self, instId: str, sz: int):
+        """市价买入"""
+        return self.tradeAPI.place_order(
+            instId=instId,
+            tdMode="cross",
+            ccy="USDT",
+            side="buy",
+            posSide="long",
+            ordType="market",
+            sz=f"{sz}",
+        )
+
+    @retry()
+    def market_sell(self, instId: str, sz: int):
+        """市价卖出"""
+        return self.tradeAPI.place_order(
+            instId=instId,
+            tdMode="cross",
+            ccy="USDT",
+            side="sell",
+            posSide="long",
+            ordType="market",
+            sz=f"{sz}",
+        )

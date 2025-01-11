@@ -1,10 +1,9 @@
-from core.cfg import Config
 import numpy as np
-from sim.trace import TraceExec
-from strategy.rsigrid import RSIGrid
+
+from core.trace.base import TraceExec
 
 
-class RandomExec(TraceExec):
+class RandomTrace(TraceExec):
     def init_price_history(self):
         current_price = 100
         # 生成正态分布的随机数，均值0，标准差0.0333，限制在[-0.1, 0.1]范围内
@@ -12,13 +11,3 @@ class RandomExec(TraceExec):
             random_factor = np.clip(np.random.normal(0, 0.00333), -0.01, 0.01)
             current_price = current_price * (1 + random_factor)
             self.price_history.append(current_price)
-
-
-if __name__ == "__main__":
-    cfg = Config("simulation.ini")
-    cfg.factor_config.ma_fast_timeperiod = 20
-    cfg.factor_config.ma_slow_timeperiod = 120
-    sim = RandomExec(cfg=cfg)
-    strategy = RSIGrid(sim, cfg=cfg)
-    strategy.run()
-    sim.display()

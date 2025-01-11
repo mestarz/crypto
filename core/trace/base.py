@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
 
 from core.execute import Execute
-from strategy.factor import Factor
+from core.factor import Factor
 from core.cfg import Config
-from sim.plot.plotter import SimulationPlotter
+from core.trace.plot.plotter import SimulationPlotter
 
 
 class TraceExec(Execute, ABC):
@@ -122,7 +122,9 @@ class TraceExec(Execute, ABC):
         slow = np.array(self.slow)  # 添加慢均线数据
 
         # 将数组统一长度
-        min_len = min(len(kline_data), len(rsi_data), len(assert_price_history), len(baseline), len(fast), len(slow))
+        min_len = min(
+            len(kline_data), len(rsi_data), len(assert_price_history), len(baseline), len(fast), len(slow)
+        )
         kline_data = kline_data[:min_len]
         rsi_data = rsi_data[:min_len]
         assert_price_history = assert_price_history[:min_len]

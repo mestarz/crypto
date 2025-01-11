@@ -1,8 +1,6 @@
 import pandas as pd
 
-from sim.trace import TraceExec
-from strategy.rsigrid import RSIGrid
-from core.cfg import Config
+from core.trace.base import TraceExec
 
 
 class BackTrace(TraceExec):
@@ -32,13 +30,3 @@ class BackTrace(TraceExec):
 
         df = pd.DataFrame(r, columns=["ts", "Open", "High", "Low", "Close", "isOver"])
         return [float(i) for i in df["Close"].tolist()]
-
-
-if __name__ == "__main__":
-    cfg = Config("simulation.ini")
-    cfg.factor_config.ma_fast_timeperiod = 20
-    cfg.factor_config.ma_slow_timeperiod = 200
-    backtrace = BackTrace(cfg=cfg, times=1000)
-    strategy = RSIGrid(backtrace, cfg=cfg)
-    strategy.run()
-    backtrace.display()

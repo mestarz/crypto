@@ -1,7 +1,7 @@
 import talib
 import pandas as pd
-from strategy.factor import Factor
 
+from core.factor import Factor
 from core.cfg import Config
 from core.execute import Execute
 

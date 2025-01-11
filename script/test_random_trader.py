@@ -1,6 +1,7 @@
 import core.trader as trader
-import core.strategy as strategy
+
 from core.cfg import Config
+from core.strategy import RandBuy
 
 
 def main():
@@ -8,8 +9,8 @@ def main():
     cfg = Config("simulation.ini")
     cfg.print_cfg()
     exec = trader.MarkTrader(cfg)
-    engine = strategy.RSIGrid(exec, cfg)
-    engine.run()
+    strategy = RandBuy(exec, cfg)
+    strategy.run()
 
 
 if __name__ == "__main__":
