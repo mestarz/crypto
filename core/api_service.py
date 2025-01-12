@@ -1,10 +1,22 @@
 import pandas as pd
 
+from typing import Tuple
 from core.utils.retry import retry
+
+import okx.Account
+import okx.Trade
+import okx.PublicData
+import okx.MarketData
 
 
 class APIService:
-    def __init__(self, accountAPI, marketAPI, tradeAPI, publicDataAPI):
+    def __init__(
+        self,
+        accountAPI: okx.Account.AccountAPI,
+        marketAPI: okx.MarketData.MarketAPI,
+        tradeAPI: okx.Trade.TradeAPI,
+        publicDataAPI: okx.PublicData.PublicAPI,
+    ):
         self.accountAPI = accountAPI
         self.marketAPI = marketAPI
         self.tradeAPI = tradeAPI
@@ -13,7 +25,8 @@ class APIService:
     @retry()
     def set_leverage(self, instId: str, lever: str, mgnMode: str):
         """设置杠杆"""
-        return self.accountAPI.set_leverage(instId=instId, lever=lever, mgnMode=mgnMode)
+        self.accountAPI.set_leverage(instId=instId, lever=lever, mgnMode=mgnMode, posSide="long")
+        self.accountAPI.set_leverage(instId=instId, lever=lever, mgnMode=mgnMode, posSide="short")
 
     def get_more_data(self, instId: str, bar: str, nums: int = 100) -> pd.DataFrame:
         r = self.get_mark_price_candlesticks(instId=instId, bar=bar, limit=nums)
@@ -34,6 +47,17 @@ class APIService:
             timestamp = r[0][0]
 
         df = pd.DataFrame(r, columns=["ts", "Open", "High", "Low", "Close", "isOver"])
+        df["ts"] = pd.to_datetime(df["ts"].astype(float), unit="ms", errors="coerce")
+        df = df.astype(
+            {
+                "Open": float,
+                "High": float,
+                "Low": float,
+                "Close": float,
+                "isOver": int,
+            }
+        )
+        df.set_index("ts", inplace=True)
         return df
 
     @retry()
@@ -70,6 +94,19 @@ class APIService:
         return float(result) if result != "" else 0
 
     @retry()
+    def get_position_size_long_and_short(self, instId: str) -> Tuple[float, float]:
+        """获取long & short的持仓"""
+        result = self.accountAPI.get_positions(instId=instId)["data"]
+        long = 0
+        short = 0
+        for item in result:
+            if item["posSide"] == "long" and item["availPos"] != "":
+                long += float(item["availPos"])
+            elif item["posSide"] == "short" and item["availPos"] != "":
+                short += float(item["availPos"])
+        return long, short
+
+    @retry()
     def get_imr(self, instId: str):
         """获取保证金"""
         result = self.accountAPI.get_positions(instId=instId)["data"]
@@ -97,8 +134,8 @@ class APIService:
         return int(raw_data["sz"]) - int(raw_data["accFillSz"])
 
     @retry()
-    def market_buy(self, instId: str, sz: int):
-        """市价买入"""
+    def market_long_buy(self, instId: str, sz: int):
+        """long市价开仓"""
         return self.tradeAPI.place_order(
             instId=instId,
             tdMode="cross",
@@ -110,14 +147,40 @@ class APIService:
         )
 
     @retry()
-    def market_sell(self, instId: str, sz: int):
-        """市价卖出"""
+    def market_long_sell(self, instId: str, sz: int):
+        """long市价平仓"""
         return self.tradeAPI.place_order(
             instId=instId,
             tdMode="cross",
             ccy="USDT",
             side="sell",
             posSide="long",
+            ordType="market",
+            sz=f"{sz}",
+        )
+
+    @retry()
+    def market_short_buy(self, instId: str, sz: int):
+        """short市价开仓"""
+        return self.tradeAPI.place_order(
+            instId=instId,
+            tdMode="cross",
+            ccy="USDT",
+            side="sell",
+            posSide="short",
+            ordType="market",
+            sz=f"{sz}",
+        )
+
+    @retry()
+    def market_short_sell(self, instId: str, sz: int):
+        """short市价平仓"""
+        return self.tradeAPI.place_order(
+            instId=instId,
+            tdMode="cross",
+            ccy="USDT",
+            side="buy",
+            posSide="short",
             ordType="market",
             sz=f"{sz}",
         )

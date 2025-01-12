@@ -38,10 +38,7 @@ class RealExecute(Execute, ABC):
 
     def price(self, nums: int) -> pd.DataFrame:
         """获取市场价格数据"""
-        raw_data = self.api.get_mark_price_candlesticks(
-            instId=self.cfg.trade_config.coin, bar=self.cfg.trade_config.period
-        )
-        return self._format_price_data(raw_data)
+        return self.api.get_more_data(self.cfg.trade_config.coin, self.cfg.trade_config.period, nums=nums)
 
     def buy(self):
         """执行买入操作"""
@@ -78,22 +75,6 @@ class RealExecute(Execute, ABC):
     @abstractmethod
     def _sell(self, sell_count: int, now_price: float):
         pass
-
-    def _format_price_data(self, raw_data: list) -> pd.DataFrame:
-        """格式化价格数据"""
-        df = pd.DataFrame(raw_data, columns=["ts", "Open", "High", "Low", "Close", "isOver"])
-        df["ts"] = pd.to_datetime(df["ts"].astype(float), unit="ms", errors="coerce")
-        df = df.astype(
-            {
-                "Open": float,
-                "High": float,
-                "Low": float,
-                "Close": float,
-                "isOver": int,
-            }
-        )
-        df.set_index("ts", inplace=True)
-        return df
 
     def _calculate_buy_count(self) -> int:
         """计算买入数量"""

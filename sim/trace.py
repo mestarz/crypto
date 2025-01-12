@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
 
 from core.execute import Execute
-from strategy.factor import Factor
+from core.factor import Factor
 from core.cfg import Config
 from sim.plot.plotter import SimulationPlotter
 

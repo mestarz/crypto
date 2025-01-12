@@ -1,6 +1,5 @@
 import core.trader as trader
 import core.strategy as strategy
-
 from core.cfg import Config
 
 
@@ -9,7 +8,7 @@ def main():
     cfg = Config("simulation.ini")
     cfg.print_cfg()
     exec = trader.MarkTrader(cfg)
-    engine = strategy.AvgRSI(exec, cfg)
+    engine = strategy.RSIGrid(exec, cfg)
     engine.run()
 
 
