@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass
 from configparser import ConfigParser
 from logging import Logger, getLogger
+from core.api_service import APIService
 
 import okx.Account
 import okx.Trade
@@ -126,7 +127,7 @@ class Config:
         """初始化所有API接口"""
         flag = "1" if self.api_config.is_simulate else "0"
 
-        self.accountAPI = okx.Account.AccountAPI(
+        _accountAPI = okx.Account.AccountAPI(
             api_key=self.api_config.api_key,
             api_secret_key=self.api_config.secret_key,
             passphrase=self.api_config.passphrase,
@@ -136,7 +137,7 @@ class Config:
             debug=self.api_config.api_debug,
         )
 
-        self.tradeAPI = okx.Trade.TradeAPI(
+        _tradeAPI = okx.Trade.TradeAPI(
             api_key=self.api_config.api_key,
             api_secret_key=self.api_config.secret_key,
             passphrase=self.api_config.passphrase,
@@ -146,13 +147,14 @@ class Config:
             debug=self.api_config.api_debug,
         )
 
-        self.publicDataAPI = okx.PublicData.PublicAPI(
+        _publicDataAPI = okx.PublicData.PublicAPI(
             flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
         )
 
-        self.marketAPI = okx.MarketData.MarketAPI(
+        _marketAPI = okx.MarketData.MarketAPI(
             flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
         )
+        self.api = APIService(_accountAPI, _marketAPI, _tradeAPI, _publicDataAPI)
 
     def _init_logger(self) -> Logger:
         """初始化日志记录器"""

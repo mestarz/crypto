@@ -14,7 +14,7 @@ class Execute(ABC):
         pass
 
     @abstractmethod
-    def price(self) -> np.ndarray:
+    def price(self, nums: int) -> np.ndarray:
         pass
 
     @abstractmethod

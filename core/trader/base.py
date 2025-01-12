@@ -5,16 +5,13 @@ from datetime import datetime
 
 from core.cfg import Config
 from core.execute import Execute
-from core.api_service import APIService
 
 
 class RealExecute(Execute, ABC):
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.logger = self.cfg.logger
-        self.api = APIService(
-            self.cfg.accountAPI, self.cfg.marketAPI, self.cfg.tradeAPI, self.cfg.publicDataAPI
-        )
+        self.api = cfg.api
         self._init_leverage()
         self._init_contract_params()
 
@@ -39,7 +36,7 @@ class RealExecute(Execute, ABC):
     def stop(self) -> bool:
         return False
 
-    def price(self) -> pd.DataFrame:
+    def price(self, nums: int) -> pd.DataFrame:
         """获取市场价格数据"""
         raw_data = self.api.get_mark_price_candlesticks(
             instId=self.cfg.trade_config.coin, bar=self.cfg.trade_config.period

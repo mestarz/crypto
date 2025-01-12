@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 from abc import ABC, abstractmethod
 
 from core.execute import Execute
-from core.factor import Factor
+from strategy.factor import Factor
 from core.cfg import Config
-from core.trace.plot.plotter import SimulationPlotter
+from sim.plot.plotter import SimulationPlotter
 
 
 class TraceExec(Execute, ABC):
@@ -72,7 +72,7 @@ class TraceExec(Execute, ABC):
     def stop(self) -> bool:
         return self.work_time >= self.stop_time
 
-    def price(self, nums: int):
+    def price(self):
         pass
 
     def _factor(self, _) -> Factor:

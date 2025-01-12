@@ -1,3 +1,5 @@
+import pandas as pd
+
 from core.utils.retry import retry
 
 
@@ -13,10 +15,33 @@ class APIService:
         """设置杠杆"""
         return self.accountAPI.set_leverage(instId=instId, lever=lever, mgnMode=mgnMode)
 
+    def get_more_data(self, instId: str, bar: str, nums: int = 100) -> pd.DataFrame:
+        r = self.get_mark_price_candlesticks(instId=instId, bar=bar, limit=nums)
+        timestamp = r[0][0]
+        count = nums - len(r)
+        while count > 0:
+            limit = 100 if count > 100 else count
+            count -= limit
+            r = (
+                self.get_mark_price_candlesticks(
+                    instId=instId,
+                    bar=bar,
+                    after=timestamp,
+                    limit=limit,
+                )
+                + r
+            )
+            timestamp = r[0][0]
+
+        df = pd.DataFrame(r, columns=["ts", "Open", "High", "Low", "Close", "isOver"])
+        return df
+
     @retry()
-    def get_mark_price_candlesticks(self, instId: str, bar: str):
+    def get_mark_price_candlesticks(self, instId: str, bar: str, limit: int = 100, after: str = ""):
         """获取市场价格数据"""
-        return self.marketAPI.get_mark_price_candlesticks(instId=instId, bar=bar)["data"][::-1]
+        return self.marketAPI.get_mark_price_candlesticks(
+            instId=instId, bar=bar, limit=f"{limit}", after=after
+        )["data"][::-1]
 
     @retry()
     def get_mark_price(self, instType: str, instId: str):
