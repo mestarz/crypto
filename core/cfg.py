@@ -84,13 +84,36 @@ class Config:
         return config
 
     def _init_api_config(self) -> APIConfig:
+        is_simulate = self._cfg.getboolean("DEFAULT", "simulate", fallback=True)
+        try:
+            import importlib.util
+
+            if is_simulate:
+                spec = importlib.util.spec_from_file_location(
+                    "config.simulation", "config/simulation.cpython-39-x86_64-linux-gnu.so"
+                )
+            else:
+                spec = importlib.util.spec_from_file_location(
+                    "config.real", "config/real.cpython-39-x86_64-linux-gnu.so"
+                )
+            cfg = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(cfg)
+        except ModuleNotFoundError:
+            raise ModuleNotFoundError("配置文件未找到，请检查配置路径。")
+
+        import config.decrypt as decrypt
+
+        apikey = decrypt.aes_decrypt(cfg.get_encrypted_value("apikey"))
+        secret_key = decrypt.aes_decrypt(cfg.get_encrypted_value("secretkey"))
+        passphrase = decrypt.aes_decrypt(cfg.get_encrypted_value("passphrase"))
+
         """初始化API配置"""
         return APIConfig(
-            api_key=self._cfg.get("OKX", "apikey", fallback="default_api_key"),
-            secret_key=self._cfg.get("OKX", "secretkey", fallback="default_secret_key"),
-            passphrase=self._cfg.get("OKX", "passphrase", fallback="default_passphrase"),
-            proxy=self._cfg.get("DEFAULT", "proxy", fallback=""),
-            is_simulate=self._cfg.getboolean("DEFAULT", "simulate", fallback=True),
+            api_key=apikey,
+            secret_key=secret_key,
+            passphrase=passphrase,
+            proxy=self._cfg.get("DEFAULT", "proxy", fallback=None),
+            is_simulate=is_simulate,
             api_debug=self._cfg.getboolean("DEFAULT", "api_debug", fallback=True),
         )
 

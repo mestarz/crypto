@@ -36,7 +36,7 @@ class RealExecute(Execute, ABC):
     def stop(self) -> bool:
         return False
 
-    def price(self, nums: int) -> pd.DataFrame:
+    def price(self, nums: int = 100) -> pd.DataFrame:
         """获取市场价格数据"""
         return self.api.get_more_data(self.cfg.trade_config.coin, self.cfg.trade_config.period, nums=nums)
 
