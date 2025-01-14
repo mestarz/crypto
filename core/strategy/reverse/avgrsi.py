@@ -58,6 +58,8 @@ class AvgRSI:
             rsi_rebuild = talib.RSI(fast_rebuild, timeperiod=14)
 
             if rsi_rebuild[-1] < 20:
+                if slow[-1] < slow[-5]:
+                    return
                 self.exec.clear_long()
                 self.exec.set_long_position(1)
                 self.state = "long"
@@ -74,6 +76,8 @@ class AvgRSI:
             rsi_rebuild = talib.RSI(fast_rebuild, timeperiod=14)
 
             if rsi_rebuild[-1] > 70:
+                if slow[-1] > slow[-5]:
+                    return
                 self.exec.clear_long()
                 self.state = "empty"
                 break
