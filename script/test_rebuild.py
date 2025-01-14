@@ -8,7 +8,7 @@ import time
 
 def main():
     cfg = Config("simulation.ini")
-    cfg.trade_config.period = "5m"
+    cfg.trade_config.period = "1m"
     exec = trader.MarkTrader(cfg)
     price = exec.price(nums=1000)["Close"].to_numpy()
 
