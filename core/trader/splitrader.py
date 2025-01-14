@@ -1,9 +1,9 @@
 import random
 
-from core.trader.base import RealExecute
+from core.trader.postrader import PositionTrader
 
 
-class SplitTrader(RealExecute):
+class SplitTrader(PositionTrader):
     def _buy(self, buy_count: int, now_price: float):
         remain_count = buy_count
         while remain_count > buy_count * 0.2:

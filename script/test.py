@@ -1,12 +1,16 @@
 import core.trader as trader
-import numpy as np
+from core.strategy.reverse.avgrsi import AvgRSI
+
 from core.cfg import Config
 
 
 def main():
+    # 初始化配置和执行器
     cfg = Config("simulation.ini")
-    long, short = cfg.api.get_position_size_long_and_short("ARB-USDT-SWAP")
-    print(long, short)
+    cfg.print_cfg()
+    exec = trader.PositionTrader(cfg)
+    engine = AvgRSI(exec, cfg)
+    engine.run()
 
 
 if __name__ == "__main__":

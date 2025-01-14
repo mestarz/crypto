@@ -8,8 +8,9 @@ import time
 
 def main():
     cfg = Config("simulation.ini")
+    cfg.trade_config.period = "5m"
     exec = trader.MarkTrader(cfg)
-    price = exec.price(nums=600)["Close"].to_numpy()
+    price = exec.price(nums=1000)["Close"].to_numpy()
 
     # 计算慢均线
     slow = np.array(talib.SMA(price, timeperiod=200))

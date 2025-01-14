@@ -28,3 +28,29 @@ class Execute(ABC):
     @abstractmethod
     def stop(self) -> bool:
         pass
+
+    """position"""
+
+    @abstractmethod
+    def all_in_long(self):
+        pass
+
+    @abstractmethod
+    def all_in_short(self):
+        pass
+
+    @abstractmethod
+    def clear_long(self):
+        pass
+
+    @abstractmethod
+    def clear_short(self):
+        pass
+
+    @abstractmethod
+    def set_long_position(self, percentage: float):
+        pass
+
+    @abstractmethod
+    def set_short_position(self, percentage: float):
+        pass

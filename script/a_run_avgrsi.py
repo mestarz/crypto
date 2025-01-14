@@ -8,7 +8,7 @@ def main():
     # 初始化配置和执行器
     cfg = Config("simulation.ini")
     cfg.print_cfg()
-    exec = trader.MarkTrader(cfg)
+    exec = trader.PositionTrader(cfg)
     engine = strategy.AvgRSI(exec, cfg)
     engine.run()
 

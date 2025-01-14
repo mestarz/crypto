@@ -1,7 +1,7 @@
-from core.trader.base import RealExecute
+from core.trader.postrader import PositionTrader
 
 
-class MarkTrader(RealExecute):
+class MarkTrader(PositionTrader):
     def _buy(self, buy_count, now_price):
         """市价买入"""
         return self.api.market_long_buy(self.cfg.trade_config.coin, buy_count)
