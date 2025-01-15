@@ -85,34 +85,18 @@ class Config:
 
     def _init_api_config(self) -> APIConfig:
         is_simulate = self._cfg.getboolean("DEFAULT", "simulate", fallback=True)
-        try:
-            import importlib.util
 
-            if is_simulate:
-                spec = importlib.util.spec_from_file_location(
-                    "config.simulation", "config/simulation.cpython-39-x86_64-linux-gnu.so"
-                )
-            else:
-                spec = importlib.util.spec_from_file_location(
-                    "config.real", "config/real.cpython-39-x86_64-linux-gnu.so"
-                )
-            cfg = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(cfg)
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError("配置文件未找到，请检查配置路径。")
-
-        import config.decrypt as decrypt
-
-        apikey = decrypt.aes_decrypt(cfg.get_encrypted_value("apikey"))
-        secret_key = decrypt.aes_decrypt(cfg.get_encrypted_value("secretkey"))
-        passphrase = decrypt.aes_decrypt(cfg.get_encrypted_value("passphrase"))
+        apikey = os.getenv("OKX_APIKEY", "")
+        secret_key = os.getenv("OKX_SECRETKEY", "")
+        passphrase = os.getenv("OKX_PASSPHRASE", "")
+        proxy = os.getenv("OKX_PROXY", None)  # 修改为从环境变量获取
 
         """初始化API配置"""
         return APIConfig(
             api_key=apikey,
             secret_key=secret_key,
             passphrase=passphrase,
-            proxy=self._cfg.get("DEFAULT", "proxy", fallback=None),
+            proxy=proxy,
             is_simulate=is_simulate,
             api_debug=self._cfg.getboolean("DEFAULT", "api_debug", fallback=True),
         )
@@ -149,13 +133,14 @@ class Config:
     def _init_apis(self) -> None:
         """初始化所有API接口"""
         flag = "1" if self.api_config.is_simulate else "0"
+        proxy = os.getenv("OKX_PROXY", None)  # 修改为从环境变量获取
 
         _accountAPI = okx.Account.AccountAPI(
             api_key=self.api_config.api_key,
             api_secret_key=self.api_config.secret_key,
             passphrase=self.api_config.passphrase,
             use_server_time=False,
-            proxy=self.api_config.proxy,
+            proxy=proxy,
             flag=flag,
             debug=self.api_config.api_debug,
         )
@@ -166,17 +151,13 @@ class Config:
             passphrase=self.api_config.passphrase,
             use_server_time=False,
             flag=flag,
-            proxy=self.api_config.proxy,
+            proxy=proxy,
             debug=self.api_config.api_debug,
         )
 
-        _publicDataAPI = okx.PublicData.PublicAPI(
-            flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
-        )
+        _publicDataAPI = okx.PublicData.PublicAPI(flag=flag, proxy=proxy, debug=self.api_config.api_debug)
 
-        _marketAPI = okx.MarketData.MarketAPI(
-            flag=flag, proxy=self.api_config.proxy, debug=self.api_config.api_debug
-        )
+        _marketAPI = okx.MarketData.MarketAPI(flag=flag, proxy=proxy, debug=self.api_config.api_debug)
         self.api = APIService(_accountAPI, _marketAPI, _tradeAPI, _publicDataAPI)
 
     def _init_logger(self) -> Logger:

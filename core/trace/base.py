@@ -143,3 +143,23 @@ class TraceExec(Execute, ABC):
             slow=slow,  # 添加慢均线数据参数
         )
         plotter.show()
+
+    """TODO delete"""
+
+    def all_in_long(self):
+        return super().all_in_long()
+
+    def all_in_short(self):
+        return super().all_in_short()
+
+    def clear_long(self):
+        return super().clear_long()
+
+    def clear_short(self):
+        return super().clear_short()
+
+    def set_long_position(self, percentage):
+        return super().set_long_position(percentage)
+
+    def set_short_position(self, percentage):
+        return super().set_short_position(percentage)

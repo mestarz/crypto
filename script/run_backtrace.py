@@ -1,3 +1,4 @@
+# cython: language_level=3
 import core.trace as trace
 import core.strategy as strategy
 

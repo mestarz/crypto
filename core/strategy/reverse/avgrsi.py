@@ -1,3 +1,4 @@
+import random
 import talib
 
 from core.execute import Execute
@@ -9,13 +10,10 @@ class AvgRSI:
         self.exec = execution
         self.cfg = cfg
 
-        self.lever = 10
         self.rsi_up = 70
         self.rsi_down = 30
 
         self.ct_val = self.cfg.api.ct_val(self.cfg.trade_config.coin)
-        self.cfg.api.set_leverage(self.cfg.trade_config.coin, self.lever, "cross")
-
         self.state = "empty"
 
     def run(self):
