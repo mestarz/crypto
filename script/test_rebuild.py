@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from core.cfg import Config
 import time
+from init_env import load_env_variables
 
 
 def main():
