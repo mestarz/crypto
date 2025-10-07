@@ -6,13 +6,7 @@ configs = Config()
 
 
 def main_infer():
-    target_coin = [
-        "BTC",
-        "ETH",
-        "XRP",
-        "BNB",
-        "SOL",
-    ]
+    target_coin = configs.target_coins
 
     dfs = []
     tps = []
@@ -24,6 +18,7 @@ def main_infer():
         tps.append(x_timestamp)
 
     r = infer_predict(dfs, tps)
+    return {target_coin[i]: r[i] for i in range(len(r))}
 
 
 if __name__ == "__main__":
