@@ -2,12 +2,14 @@ import requests
 import pandas as pd
 import time
 from datetime import datetime
+from core.okx.retry import retry
 
 BASE_URL = "https://www.okx.com/api/v5/market/history-candles"
 BAR = "5m"
 LIMIT = 300  # OKX 每次最多 100 条
 
 
+@retry()
 def fetch_candles(coin: str, after=""):
     """从 OKX 获取一分钟 K 线数据"""
     params = {

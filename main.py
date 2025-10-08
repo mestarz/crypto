@@ -27,7 +27,8 @@ class Machine:
     def avail_balance(self) -> float:
         bl = self.api.get_account_usdt() * 1.0 / len(self.target_coins)
         a = self.api.get_account_balance("USDT")
-        return min(a, bl)
+        # 预留100刀，防止交易失败
+        return min(a - 100, bl)
 
     def short(self, coin: str):
         [long, short] = self.api.get_position_size_long_and_short(
