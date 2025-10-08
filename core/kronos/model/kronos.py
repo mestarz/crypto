@@ -526,11 +526,7 @@ def auto_regressive_inference(
                     [x_stamp[:, -start_idx:, :], y_stamp[:, :pred_step, :]], dim=1
                 )
 
-        if verbose:
-            ran = trange
-        else:
-            ran = range
-        for i in ran(pred_len):
+        for i in trange(pred_len, disable=True):
             current_seq_len = initial_seq_len + i
 
             if current_seq_len <= max_context:
@@ -556,7 +552,6 @@ def auto_regressive_inference(
 
             x_token[0] = torch.cat([x_token[0], sample_pre], dim=1)
             x_token[1] = torch.cat([x_token[1], sample_post], dim=1)
-
 
         input_tokens = [t[:, -max_context:].contiguous() for t in x_token]
         z = tokenizer.decode(input_tokens, half=True)
